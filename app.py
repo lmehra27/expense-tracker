@@ -7,7 +7,7 @@ from datetime import date
 PAGE_TITLE = "My Expense Tracker"
 
 st.set_page_config(page_title=PAGE_TITLE, page_icon="💰")
-st.title("💰 Simple Expense Tracker")
+st.title("💰 Expense Tracker")
 
 # --- DATA HANDLING (The Backend) ---
 # We use st.connection to handle the Google Sheets API automatically
@@ -63,9 +63,32 @@ with st.sidebar.form("entry_form", clear_on_submit=True):
     
     # Dynamic categories based on type
     if transaction_type == "Expense":
-        categories = ["Food", "Transport", "Rent", "Utilities", "Entertainment", "Shopping", "Other"]
+        categories = [
+            "House",
+            "Car",
+            "Childcare",
+            "Groceries", 
+            "Utilities", 
+            "Shopping",
+            "Medical",
+            "Family support",
+            "Kids activities",
+            "Restaurant",
+            "Health & Fitness",
+            "Entertainment", 
+            "Travel",
+            "Gifts",
+            "Taxes",
+            "Other"
+            ]
     else:
-        categories = ["Salary", "Freelance", "Gift", "Investments", "Other"]
+        categories = [
+            "Paycheck", 
+            "Bonus", 
+            "Reimbursement", 
+            "Cashback", 
+            "Gift",
+        ]
         
     category = st.selectbox("Category", categories)
     item = st.text_input("Description (e.g., 'Coffee')")
