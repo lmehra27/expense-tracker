@@ -1,5 +1,6 @@
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
 
 def plot_monthly_breakdown(expense_df):
@@ -32,12 +33,8 @@ def plot_monthly_breakdown(expense_df):
     )
 
     monthly_sum = month_category.groupby("month").agg(
-        monthly_sum=("Amount", "sum")   
-    ).reset_index()
-
-    month_category = month_category.merge(
-        monthly_sum, on="month", how="left"
-    )    
+        monthly_sum=("Amount", lambda x: x.sum().round())   
+    ).reset_index()  
 
     fig = px.bar(  
         month_category,
@@ -45,8 +42,17 @@ def plot_monthly_breakdown(expense_df):
         y="month",
         labels={"month": "Month", "Amount": "Total Expense"},
         color="Category",
-        orientation="h",
-        text="monthly_sum",)
+        orientation="h",)
     
-    fig.update_traces(texttemplate="%{text:.2s}", textposition="outside")
+    fig.add_trace(
+        go.Scatter(
+            x=monthly_sum["monthly_sum"],
+            y=monthly_sum["month"],
+            mode="text",
+            text=monthly_sum["monthly_sum"],
+            textposition="middle right",
+            showlegend=False,
+        )
+    )
+
     return fig
