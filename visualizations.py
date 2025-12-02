@@ -66,6 +66,7 @@ def plot_monthly_breakdown(expense_df):
 
     fig.update_layout(font=dict(family="Arial, sans-serif", size=14, color="black"))
 
-    fig.update_xaxes(range=[0, 10000])
+    fig.update_xaxes(range=[0, 12000])
+    fig.add_vline(x=11166, line_dash="dash", line_color="red")
 
     return fig
