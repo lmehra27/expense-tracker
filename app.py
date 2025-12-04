@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
 from streamlit_gsheets import GSheetsConnection
-from datetime import date
+from datetime import datetime, date
+import pytz
 
 import visualizations as viz
 
@@ -100,7 +101,12 @@ with st.sidebar.form("entry_form", clear_on_submit=True):
     category = st.selectbox("Category", categories)
     item = st.text_input("Description (e.g., 'Coffee')")
     amount = st.number_input("Amount", min_value=0.01, format="%.2f")
-    date_input = st.date_input("Date", date.today())
+
+    # calculate current date in central timezone
+    central = pytz.timezone("America/Chicago")
+    now_utc = datetime.now().replace(tzinfo=pytz.utc)
+    now_central = now_utc.astimezone(central)
+    date_input = st.date_input("Date", now_central.date())
 
     submitted = st.form_submit_button("Save Entry")
 
@@ -144,7 +150,7 @@ if not df.empty:
         if not expense_df.empty:
             # Group by Category
             plotly_fig = viz.plot_monthly_breakdown(expense_df)
-            st.plotly_chart(plotly_fig)   
+            st.plotly_chart(plotly_fig)
             # category_group = expense_df.groupby("Category")["Amount"].sum()
             # st.bar_chart(category_group, horizontal=True)
         else:
