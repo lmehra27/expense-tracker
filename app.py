@@ -129,16 +129,16 @@ if not df.empty:
     # 2. KPIs
     total_income = df[df["Type"] == "Income"]["Amount"].sum()
     total_expense = df[df["Type"] == "Expense"]["Amount"].sum()
-    balance = total_income - total_expense
+    savings = (
+        (total_income - total_expense) / total_income * 100
+        if total_income > total_expense
+        else 0
+    )
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Total Income", f"${total_income:,.2f}")
     col2.metric("Total Expenses", f"${total_expense:,.2f}")
-    col3.metric("Remaining Balance", f"${balance:,.2f}", delta_color="normal")
-
-    # 3. Recent Transactions Table
-    st.subheader("📝 Recent Transactions")
-    st.dataframe(df.tail(5).iloc[::-1], width="stretch")  # Show last 5, reversed
+    col3.metric("Remaining Balance", f"${savings:,.2f}", delta_color="normal")
 
     # 4. Simple Charts
     st.subheader("📊 Analysis")
@@ -159,6 +159,10 @@ if not df.empty:
     with tab2:
         type_group = df.groupby("Type")["Amount"].sum()
         st.bar_chart(type_group)
+
+    # 3. Recent Transactions Table
+    st.subheader("📝 Recent Transactions")
+    st.dataframe(df.tail(5).iloc[::-1], width="stretch")  # Show last 5, reversed
 
 else:
     st.info("No data found. Use the sidebar to add your first expense!")
