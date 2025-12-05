@@ -64,51 +64,54 @@ def save_data(date_val, category, item, amount, trans_type):
 
 
 # --- SIDEBAR: DATA ENTRY ---
-st.sidebar.header("Add New Entry")
 
-with st.sidebar.form("entry_form", clear_on_submit=True):
-    transaction_type = st.selectbox("Type", ["Expense", "Income"])
+# Dynamic categories based on type
+categories = {
+    "Expense": [
+        "House",
+        "Car",
+        "Childcare",
+        "Groceries",
+        "Utilities",
+        "Shopping",
+        "Medical",
+        "Family support",
+        "Kids activities",
+        "Restaurant",
+        "Health & Fitness",
+        "Entertainment",
+        "Travel",
+        "Gifts",
+        "Taxes",
+        "Other",
+    ],
+    "Income": [
+        "Paycheck",
+        "Bonus",
+        "Reimbursement",
+        "Cashback",
+        "Gift",
+    ],
+}
 
-    # Dynamic categories based on type
-    if transaction_type == "Expense":
-        categories = [
-            "House",
-            "Car",
-            "Childcare",
-            "Groceries",
-            "Utilities",
-            "Shopping",
-            "Medical",
-            "Family support",
-            "Kids activities",
-            "Restaurant",
-            "Health & Fitness",
-            "Entertainment",
-            "Travel",
-            "Gifts",
-            "Taxes",
-            "Other",
-        ]
-    else:
-        categories = [
-            "Paycheck",
-            "Bonus",
-            "Reimbursement",
-            "Cashback",
-            "Gift",
-        ]
+# calculate current date in central timezone
+central = pytz.timezone("America/Chicago")
+now_utc = datetime.now().replace(tzinfo=pytz.utc)
+now_central = now_utc.astimezone(central)
 
-    category = st.selectbox("Category", categories)
+st.sidebar.header("Add Expense")
+
+with st.sidebar.form(key="expense_form", clear_on_submit=True):
+
+    transaction_type = "Expense"
+    selected_categories = categories[transaction_type]
+
+    category = st.selectbox("Category", options=selected_categories, key=1, index=0)
     item = st.text_input("Description (e.g., 'Coffee')")
-    amount = st.number_input("Amount", min_value=0.01, format="%.2f")
+    amount = st.number_input("Amount", min_value=0.01, format="%.2f", key=2)
+    date_input = st.date_input("Date", now_central.date(), key=3)
 
-    # calculate current date in central timezone
-    central = pytz.timezone("America/Chicago")
-    now_utc = datetime.now().replace(tzinfo=pytz.utc)
-    now_central = now_utc.astimezone(central)
-    date_input = st.date_input("Date", now_central.date())
-
-    submitted = st.form_submit_button("Save Entry")
+    submitted = st.form_submit_button("Save Expense Entry", key=4)
 
     if submitted:
         if item and amount > 0:
@@ -116,6 +119,27 @@ with st.sidebar.form("entry_form", clear_on_submit=True):
             st.success("Entry saved!")
         else:
             st.error("Please enter a description and amount.")
+
+st.sidebar.header("Add Income")
+with st.sidebar.form(key="income_form", clear_on_submit=True):
+
+    transaction_type = "Income"
+    selected_categories = categories[transaction_type]
+
+    category = st.selectbox("Category", options=selected_categories, key=5, index=0)
+
+    item = ""
+    amount = st.number_input("Amount", min_value=0.01, format="%.2f", key=6)
+    date_input = st.date_input("Date", now_central.date(), key=7)
+
+    submitted = st.form_submit_button("Save Income Entry", key=8)
+
+    if submitted:
+        if category and amount > 0:
+            save_data(date_input, category, item, amount, transaction_type)
+            st.success("Entry saved!")
+        else:
+            st.error("Please select Category and amount.")
 
 # --- MAIN DASHBOARD ---
 
