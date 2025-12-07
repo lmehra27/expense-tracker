@@ -4,6 +4,11 @@ from streamlit_gsheets import GSheetsConnection
 from datetime import datetime, date
 import pytz
 
+import constants as const
+from data_processing import (
+    calculate_current_month_expense,
+    calculate_last_month_income,
+)
 import visualizations as viz
 
 # --- CONFIGURATION ---
@@ -65,35 +70,6 @@ def save_data(date_val, category, item, amount, trans_type):
 
 # --- SIDEBAR: DATA ENTRY ---
 
-# Dynamic categories based on type
-categories = {
-    "Expense": [
-        "House",
-        "Car",
-        "Childcare",
-        "Groceries",
-        "Utilities",
-        "Shopping",
-        "Medical",
-        "Family support",
-        "Kids activities",
-        "Restaurant",
-        "Health & Fitness",
-        "Entertainment",
-        "Travel",
-        "Gifts",
-        "Taxes",
-        "Other",
-    ],
-    "Income": [
-        "Paycheck",
-        "Bonus",
-        "Reimbursement",
-        "Cashback",
-        "Gift",
-    ],
-}
-
 # calculate current date in central timezone
 central = pytz.timezone("America/Chicago")
 now_utc = datetime.now().replace(tzinfo=pytz.utc)
@@ -104,7 +80,7 @@ st.sidebar.header("Add Expense")
 with st.sidebar.form(key="expense_form", clear_on_submit=True):
 
     transaction_type = "Expense"
-    selected_categories = categories[transaction_type]
+    selected_categories = const.categories[transaction_type]
 
     category = st.selectbox("Category", options=selected_categories, key=1, index=0)
     item = st.text_input("Description (e.g., 'Coffee')")
@@ -124,7 +100,7 @@ st.sidebar.header("Add Income")
 with st.sidebar.form(key="income_form", clear_on_submit=True):
 
     transaction_type = "Income"
-    selected_categories = categories[transaction_type]
+    selected_categories = const.categories[transaction_type]
 
     category = st.selectbox("Category", options=selected_categories, key=5, index=0)
 
@@ -147,42 +123,48 @@ with st.sidebar.form(key="income_form", clear_on_submit=True):
 df = load_data()
 
 if not df.empty:
-    # Ensure numeric column is actually numeric for math
-    df["Amount"] = pd.to_numeric(df["Amount"])
 
     # 2. KPIs
-    total_income = df[df["Type"] == "Income"]["Amount"].sum()
-    total_expense = df[df["Type"] == "Expense"]["Amount"].sum()
+    last_month_income = calculate_last_month_income(df)
+    current_month_expense = calculate_current_month_expense(df)
     savings = (
-        (total_income - total_expense) / total_income * 100
-        if total_income > total_expense
+        round((last_month_income - current_month_expense) / last_month_income * 100)
+        if last_month_income > current_month_expense
         else 0
     )
 
     col1, col2, col3 = st.columns(3)
-    col1.metric("Total Income", f"${total_income:,.2f}")
-    col2.metric("Total Expenses", f"${total_expense:,.2f}")
-    col3.metric("Remaining Balance", f"${savings:,.2f}", delta_color="normal")
+    col1.metric("Last Month Income", f"${last_month_income:,.2f}")
+    col2.metric("Current Month Expenses", f"${current_month_expense:,.2f}")
+    col3.metric("Savings_rate", f"{savings:,.2f}%", delta_color="normal")
 
     # 4. Simple Charts
     st.subheader("📊 Analysis")
 
-    tab1, tab2 = st.tabs(["Expenses by Category", "Income vs Expense"])
+    tab1, tab2 = st.tabs(["Expenses by Category", "Expenses by Month"])
 
     with tab1:
-        expense_df = df[df["Type"] == "Expense"]
-        if not expense_df.empty:
+        if not df.empty:
             # Group by Category
-            plotly_fig = viz.plot_monthly_breakdown(expense_df)
+            plotly_fig = viz.plot_monthly_breakdown(df)
             st.plotly_chart(plotly_fig)
-            # category_group = expense_df.groupby("Category")["Amount"].sum()
-            # st.bar_chart(category_group, horizontal=True)
         else:
             st.info("No expenses recorded yet.")
 
     with tab2:
-        type_group = df.groupby("Type")["Amount"].sum()
-        st.bar_chart(type_group)
+        if not df.empty:
+            selected_category = st.selectbox(
+                "Select category to visualize:",
+                options=const.categories["Expense"],
+                key="select_category",
+            )
+
+            plotly_fig = viz.plot_expenses_by_month(
+                transactions_df=df, category=selected_category
+            )
+            st.plotly_chart(plotly_fig)
+        else:
+            st.info("No expenses recorded yet.")
 
     # 3. Recent Transactions Table
     st.subheader("📝 Recent Transactions")

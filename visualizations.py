@@ -2,12 +2,15 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
+import constants as const
 
-def plot_monthly_breakdown(expense_df):
-    """Plot monthly expense breakdown using Plotly."""
-    if expense_df.empty:
+
+def process_expense_data(transactions_df):
+    """Process expense data for visualization."""
+    if transactions_df.empty:
         return None
 
+    expense_df = transactions_df[transactions_df["Type"] == "Expense"].copy()
     expense_df["Date"] = pd.to_datetime(expense_df["Date"])
 
     current_year_df = expense_df.assign(
@@ -15,27 +18,23 @@ def plot_monthly_breakdown(expense_df):
         month=expense_df["Date"].dt.strftime("%b"),
     ).query("year == @pd.Timestamp.now().year")
 
-    month_lst = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-    ]
     current_year_df["month"] = pd.Categorical(
-        current_year_df["month"], categories=month_lst, ordered=True
+        current_year_df["month"], categories=const.month_lst, ordered=True
     )
 
-    month_category = (
-        current_year_df.groupby(["month", "Category"])["Amount"].sum().reset_index()
+    month_category_df = (
+        current_year_df.groupby(["month", "Category"])["Amount"]
+        .sum()
+        .round()
+        .reset_index()
     )
+
+    return month_category_df
+
+
+def plot_monthly_breakdown(expense_df):
+    """Plot monthly expense breakdown using Plotly."""
+    month_category = process_expense_data(expense_df)
 
     monthly_sum = (
         month_category.groupby("month")
@@ -68,5 +67,35 @@ def plot_monthly_breakdown(expense_df):
 
     fig.update_xaxes(range=[0, 12000])
     fig.add_vline(x=11166, line_dash="dash", line_color="red")
+
+    return fig
+
+
+def plot_expenses_by_month(
+    transactions_df: pd.DataFrame,
+    category: str = None,
+) -> px.line:
+    """Plot expenses by month using Plotly."""
+    expense_data = process_expense_data(transactions_df)
+
+    if category:
+        expense_data = expense_data[expense_data["Category"] == category]
+    else:
+        expense_data = expense_data.groupby("month")["Amount"].sum().reset_index()
+
+    fig = px.line(
+        expense_data,
+        x="month",
+        y="Amount",
+        labels={"month": "Month", "Amount": "Expense"},
+        markers=True,
+        text="Amount",
+    )
+
+    fig.update_layout(font=dict(family="Arial, sans-serif", size=14, color="black"))
+    fig.update_traces(
+        line=dict(width=4), marker=dict(size=10), textposition="top center"
+    )
+    fig.update_xaxes(range=[-0.5, 12.5])
 
     return fig
