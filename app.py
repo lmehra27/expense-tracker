@@ -9,7 +9,7 @@ from data_processing import (
     calculate_current_month_expense,
     calculate_last_month_income,
 )
-import visualizations as viz
+from visualizations import plot_monthly_expense_breakdown, plot_expenses_by_month
 
 # --- CONFIGURATION ---
 PAGE_TITLE = "My Expense Tracker"
@@ -136,7 +136,7 @@ if not df.empty:
     col1, col2, col3 = st.columns(3)
     col1.metric("Last Month Income", f"${last_month_income:,.2f}")
     col2.metric("Current Month Expenses", f"${current_month_expense:,.2f}")
-    col3.metric("Savings_rate", f"{savings:,.2f}%", delta_color="normal")
+    col3.metric("Savings_rate", f"{savings:,.0f}%", delta_color="normal")
 
     # 4. Simple Charts
     st.subheader("📊 Analysis")
@@ -146,7 +146,7 @@ if not df.empty:
     with tab1:
         if not df.empty:
             # Group by Category
-            plotly_fig = viz.plot_monthly_breakdown(df)
+            plotly_fig = plot_monthly_expense_breakdown(df)
             st.plotly_chart(plotly_fig)
         else:
             st.info("No expenses recorded yet.")
@@ -159,7 +159,7 @@ if not df.empty:
                 key="select_category",
             )
 
-            plotly_fig = viz.plot_expenses_by_month(
+            plotly_fig = plot_expenses_by_month(
                 transactions_df=df, category=selected_category
             )
             st.plotly_chart(plotly_fig)

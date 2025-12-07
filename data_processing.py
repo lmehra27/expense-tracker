@@ -24,6 +24,26 @@ def process_transactions_df(transactions_df: pd.DataFrame) -> pd.DataFrame:
     return transactions_df
 
 
+def process_expense_data(transactions_df: pd.DataFrame) -> pd.DataFrame:
+    """Process expense data for visualization."""
+    if transactions_df.empty:
+        return None
+
+    transactions_df = process_transactions_df(transactions_df)
+    expense_df = transactions_df[transactions_df["Type"] == "Expense"].copy()
+
+    current_year_df = expense_df.query("year == @pd.Timestamp.now().year")
+
+    month_category_df = (
+        current_year_df.groupby(["month", "Category"])["Amount"]
+        .sum()
+        .round()
+        .reset_index()
+    )
+
+    return month_category_df
+
+
 def calculate_last_month_income(transactions_df: pd.DataFrame) -> float:
     """Calculate total income for the last month."""
     processed_transactions_df = process_transactions_df(transactions_df)

@@ -3,38 +3,12 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 import constants as const
+from data_processing import process_expense_data
 
 
-def process_expense_data(transactions_df):
-    """Process expense data for visualization."""
-    if transactions_df.empty:
-        return None
-
-    expense_df = transactions_df[transactions_df["Type"] == "Expense"].copy()
-    expense_df["Date"] = pd.to_datetime(expense_df["Date"])
-
-    current_year_df = expense_df.assign(
-        year=expense_df["Date"].dt.year,
-        month=expense_df["Date"].dt.strftime("%b"),
-    ).query("year == @pd.Timestamp.now().year")
-
-    current_year_df["month"] = pd.Categorical(
-        current_year_df["month"], categories=const.month_lst, ordered=True
-    )
-
-    month_category_df = (
-        current_year_df.groupby(["month", "Category"])["Amount"]
-        .sum()
-        .round()
-        .reset_index()
-    )
-
-    return month_category_df
-
-
-def plot_monthly_breakdown(expense_df):
+def plot_monthly_expense_breakdown(transactions_df: pd.DataFrame) -> px.bar:
     """Plot monthly expense breakdown using Plotly."""
-    month_category = process_expense_data(expense_df)
+    month_category = process_expense_data(transactions_df)
 
     monthly_sum = (
         month_category.groupby("month")
