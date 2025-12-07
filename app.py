@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from streamlit_gsheets import GSheetsConnection
-from datetime import datetime, date
+from datetime import datetime
 import pytz
 
 import constants as const
@@ -9,7 +9,10 @@ from data_processing import (
     calculate_current_month_expense,
     calculate_last_month_income,
 )
-from visualizations import plot_monthly_expense_breakdown, plot_expenses_by_month
+from visualizations import (
+    plot_monthly_expense_breakdown, 
+    plot_expenses_by_month,
+)
 
 # --- CONFIGURATION ---
 PAGE_TITLE = "My Expense Tracker"
@@ -134,8 +137,8 @@ if not df.empty:
     )
 
     col1, col2, col3 = st.columns(3)
-    col1.metric("Last Month Income", f"${last_month_income:,.2f}")
-    col2.metric("Current Month Expenses", f"${current_month_expense:,.2f}")
+    col1.metric("Last Month Income", f"${last_month_income:,.0f}")
+    col2.metric("Current Month Expenses", f"${current_month_expense:,.0f}")
     col3.metric("Savings_rate", f"{savings:,.0f}%", delta_color="normal")
 
     # 4. Simple Charts

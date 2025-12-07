@@ -2,7 +2,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-import constants as const
 from data_processing import process_expense_data
 
 
