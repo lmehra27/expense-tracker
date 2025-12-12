@@ -107,7 +107,7 @@ with st.sidebar.form(key="income_form", clear_on_submit=True):
 
     category = st.selectbox("Category", options=selected_categories, key=5, index=0)
 
-    item = ""
+    item = st.text_input("Earner")
     amount = st.number_input("Amount", min_value=0.01, format="%.2f", key=6)
     date_input = st.date_input("Date", now_central.date(), key=7)
 
