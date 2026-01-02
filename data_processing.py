@@ -44,6 +44,30 @@ def process_expense_data(transactions_df: pd.DataFrame) -> pd.DataFrame:
     return month_category_df
 
 
+def prepare_yearly_expense_data(
+        transactions_df: pd.DataFrame,
+        years_to_plot: int = 5,
+    ) -> pd.DataFrame:
+    """Prepare yearly expense data for visualization."""
+    if transactions_df.empty:
+        return None
+
+    transactions_df = process_transactions_df(transactions_df)
+    expense_df = transactions_df[transactions_df["Type"] == "Expense"].copy()
+
+    current_year = pd.Timestamp.now().year
+    loockback_year = current_year - years_to_plot + 1
+    filtered_expense_df = expense_df.query("year >= @loockback_year")
+    yearly_expense = (
+        filtered_expense_df.groupby("year")["Amount"]
+        .sum()
+        .round()
+        .reset_index()
+    )
+
+    return yearly_expense
+
+
 def calculate_last_month_income(transactions_df: pd.DataFrame) -> float:
     """Calculate total income for the last month."""
     processed_transactions_df = process_transactions_df(transactions_df)
@@ -52,7 +76,7 @@ def calculate_last_month_income(transactions_df: pd.DataFrame) -> float:
     current_month = datetime.now().strftime("%b")
 
     if current_month == "Jan":
-        last_month = ("Dec",)
+        last_month = "Dec"
         year = current_year - 1
     else:
         first_day_this_month = datetime.now().replace(day=1)

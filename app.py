@@ -156,9 +156,10 @@ if not df.empty:
 
     with tab2:
         if not df.empty:
+            categories = ["All"] + const.categories["Expense"]
             selected_category = st.selectbox(
                 "Select category to visualize:",
-                options=const.categories["Expense"],
+                options=categories,
                 key="select_category",
             )
 

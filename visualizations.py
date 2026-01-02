@@ -51,10 +51,10 @@ def plot_expenses_by_month(
     """Plot expenses by month using Plotly."""
     expense_data = process_expense_data(transactions_df)
 
-    if category:
-        expense_data = expense_data[expense_data["Category"] == category]
-    else:
+    if category == "All":
         expense_data = expense_data.groupby("month")["Amount"].sum().reset_index()
+    else:
+        expense_data = expense_data.query("Category == @category").groupby("month")["Amount"].sum().reset_index()
 
     fig = px.line(
         expense_data,
