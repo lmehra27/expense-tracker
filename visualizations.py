@@ -2,7 +2,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-from data_processing import process_expense_data
+from data_processing import process_expense_data, prepare_yearly_expense_data
 
 
 def plot_monthly_expense_breakdown(transactions_df: pd.DataFrame) -> px.bar:
@@ -19,7 +19,7 @@ def plot_monthly_expense_breakdown(transactions_df: pd.DataFrame) -> px.bar:
         month_category,
         x="Amount",
         y="month",
-        labels={"month": "Month", "Amount": "Total Expense"},
+        labels={"month": "Month", "Amount": "Total Expenses ($)"},
         color="Category",
         orientation="h",
         color_discrete_sequence=px.colors.qualitative.Safe,
@@ -60,7 +60,7 @@ def plot_expenses_by_month(
         expense_data,
         x="month",
         y="Amount",
-        labels={"month": "Month", "Amount": "Expense"},
+        labels={"month": "Month", "Amount": "Expenses ($)"},
         markers=True,
         text="Amount",
     )
@@ -70,5 +70,30 @@ def plot_expenses_by_month(
         line=dict(width=4), marker=dict(size=10), textposition="top center"
     )
     fig.update_xaxes(range=[-0.5, 12.5])
+
+    return fig
+
+
+def plot_expenses_by_year(
+    transactions_df: pd.DataFrame,
+    years_to_plot: int = 5,
+) -> px.bar:
+    """Plot expenses by year using Plotly."""
+
+    yearly_expense = prepare_yearly_expense_data(
+        transactions_df, years_to_plot=years_to_plot
+    )
+
+    fig = px.bar(
+        yearly_expense,
+        x="year",
+        y="Amount",
+        labels={"year": "Year", "Amount": "Total Expenses ($)"},
+        text="Amount",
+        color_discrete_sequence=px.colors.qualitative.Safe,
+    )
+
+    fig.update_layout(font=dict(family="Arial, sans-serif", size=14, color="black"))
+    fig.update_xaxes(type="category")
 
     return fig

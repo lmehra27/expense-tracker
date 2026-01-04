@@ -12,13 +12,14 @@ from data_processing import (
 from visualizations import (
     plot_monthly_expense_breakdown, 
     plot_expenses_by_month,
+    plot_expenses_by_year
 )
 
 # --- CONFIGURATION ---
-PAGE_TITLE = "My Expense Tracker"
+PAGE_TITLE = "Expnense and Income Tracker"
 
 st.set_page_config(page_title=PAGE_TITLE, page_icon="💰")
-st.title("💰 Expense Tracker")
+st.title("💰 Expnense and Income Tracker")
 
 # --- DATA HANDLING (The Backend) ---
 # We use st.connection to handle the Google Sheets API automatically
@@ -131,7 +132,7 @@ if not df.empty:
     last_month_income = calculate_last_month_income(df)
     current_month_expense = calculate_current_month_expense(df)
     savings = (
-        round((last_month_income - current_month_expense) / last_month_income * 100)
+        round((last_month_income - current_month_expense), 2)
         if last_month_income > current_month_expense
         else 0
     )
@@ -139,10 +140,10 @@ if not df.empty:
     col1, col2, col3 = st.columns(3)
     col1.metric("Last Month Income", f"${last_month_income:,.0f}")
     col2.metric("Current Month Expenses", f"${current_month_expense:,.0f}")
-    col3.metric("Savings_rate", f"{savings:,.0f}%", delta_color="normal")
+    col3.metric("Savings", f"${savings:,.0f}", delta_color="normal")
 
-    # 4. Simple Charts
-    st.subheader("📊 Analysis")
+    # 4. Monthly Charts
+    st.subheader("📊 Monthly Analysis")
 
     tab1, tab2 = st.tabs(["Expenses by Category", "Expenses by Month"])
 
@@ -169,8 +170,16 @@ if not df.empty:
             st.plotly_chart(plotly_fig)
         else:
             st.info("No expenses recorded yet.")
+    
+    # 5. Yearly Charts
+    st.subheader("📈 Yearly Analysis")
+    if not df.empty:
+        yearly_plotly_fig = plot_expenses_by_year(transactions_df=df, years_to_plot=5)
+        st.plotly_chart(yearly_plotly_fig)
+    else:
+        st.info("No expenses recorded yet.")
 
-    # 3. Recent Transactions Table
+    # 6. Recent Transactions Table
     st.subheader("📝 Recent Transactions")
     st.dataframe(df.tail(5).iloc[::-1], width="stretch")  # Show last 5, reversed
 
