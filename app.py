@@ -19,7 +19,7 @@ from visualizations import (
 PAGE_TITLE = "Expnense and Income Tracker"
 
 st.set_page_config(page_title=PAGE_TITLE, page_icon="💰")
-st.title("💰 Expnense and Income Tracker")
+st.title("💰 Expense and Income Tracker")
 
 # --- DATA HANDLING (The Backend) ---
 # We use st.connection to handle the Google Sheets API automatically
