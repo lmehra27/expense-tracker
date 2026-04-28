@@ -2,12 +2,15 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
+from constants import month_lst
 from data_processing import process_data_by_type, prepare_yearly_expense_data
 
 
 def plot_monthly_breakdown(transactions_df: pd.DataFrame, data_type: str) -> px.bar:
     """Plot monthly expense breakdown using Plotly."""
-    month_category = process_data_by_type(transactions_df, data_type)
+    month_category = process_data_by_type(transactions_df, data_type).query(
+        "year == @pd.Timestamp.now().year"
+    )
 
     monthly_sum = (
         month_category.groupby("month")
@@ -16,18 +19,19 @@ def plot_monthly_breakdown(transactions_df: pd.DataFrame, data_type: str) -> px.
     )
 
     if data_type == "Expense":
-        y_label = "Total Expenses ($)"
+        x_label = "Total Expenses ($)"
     else:
-        y_label = "Total Income ($)"
+        x_label = "Total Income ($)"
 
     fig = px.bar(
         month_category,
         x="Amount",
         y="month",
-        labels={"month": "Month", "Amount": y_label},
+        labels={"month": "Month", "Amount": x_label},
         color="Category",
         orientation="h",
         color_discrete_sequence=px.colors.qualitative.Safe,
+        category_orders={"month": month_lst},
     )
 
     fig.add_trace(
@@ -42,10 +46,13 @@ def plot_monthly_breakdown(transactions_df: pd.DataFrame, data_type: str) -> px.
     )
 
     fig.update_layout(font=dict(family="Arial, sans-serif", size=14, color="black"))
+    fig.update_yaxes(autorange="reversed")
 
     if data_type == "Expense":
         fig.update_xaxes(range=[0, 12000])
         fig.add_vline(x=11166, line_dash="dash", line_color="red")
+    elif data_type == "Income":
+        fig.update_xaxes(range=[0, 21000])
 
     return fig
 

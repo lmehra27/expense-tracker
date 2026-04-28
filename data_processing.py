@@ -32,10 +32,8 @@ def process_data_by_type(transactions_df: pd.DataFrame, data_type: str) -> pd.Da
     transactions_df = process_transactions_df(transactions_df)
     data_df = transactions_df[transactions_df["Type"] == data_type].copy()
 
-    current_year_df = data_df.query("year == @pd.Timestamp.now().year")
-
     month_category_df = (
-        current_year_df.groupby(["month", "Category"])["Amount"]
+        data_df.groupby(["year", "month", "Category"])["Amount"]
         .sum()
         .round()
         .reset_index()
@@ -67,7 +65,7 @@ def prepare_yearly_expense_data(
 
 def calculate_last_month_income(transactions_df: pd.DataFrame) -> float:
     """Calculate total income for the last month."""
-    processed_transactions_df = process_transactions_df(transactions_df)
+    processed_income_df = process_data_by_type(transactions_df, "Income")
 
     current_year = datetime.now().year
     current_month = datetime.now().strftime("%b")
@@ -82,10 +80,9 @@ def calculate_last_month_income(transactions_df: pd.DataFrame) -> float:
         year = current_year
 
     last_month_income = (
-        processed_transactions_df[
-            (processed_transactions_df["Type"] == "Income")
-            & (processed_transactions_df["year"] == year)
-            & (processed_transactions_df["month"] == last_month)
+        processed_income_df[
+            (processed_income_df["year"] == year)
+            & (processed_income_df["month"] == last_month)
         ]["Amount"]
         .sum()
         .round()
@@ -97,9 +94,13 @@ def calculate_last_month_income(transactions_df: pd.DataFrame) -> float:
 def calculate_current_month_expense(transactions_df: pd.DataFrame) -> float:
     """Calculate total expense for the current month."""
     processed_expense_df = process_data_by_type(transactions_df, "Expense")
+    current_year = datetime.now().year
     current_month = datetime.now().strftime("%b")
     current_month_expense = (
-        processed_expense_df[(processed_expense_df["month"] == current_month)]["Amount"]
+        processed_expense_df[
+            (processed_expense_df["year"] == current_year)
+            & (processed_expense_df["month"] == current_month)
+        ]["Amount"]
         .sum()
         .round()
     )

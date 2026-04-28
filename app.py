@@ -152,8 +152,8 @@ if not df.empty:
     with tab1:
         if not df.empty:
             # Group by Category
-            plotly_fig = plot_monthly_breakdown(df, "Expense")
-            st.plotly_chart(plotly_fig)
+            plotly_fig_expense = plot_monthly_breakdown(df, "Expense")
+            st.plotly_chart(plotly_fig_expense)
         else:
             st.info("No expenses recorded yet.")
 
@@ -176,8 +176,8 @@ if not df.empty:
     with tab3:
         if not df.empty:
             # Group by Category
-            plotly_fig = plot_monthly_breakdown(df, "Income")
-            st.plotly_chart(plotly_fig)
+            plotly_fig_income = plot_monthly_breakdown(df, "Income")
+            st.plotly_chart(plotly_fig_income)
         else:
             st.info("No income recorded yet.")
 
