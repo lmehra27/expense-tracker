@@ -10,9 +10,9 @@ from data_processing import (
     calculate_last_month_income,
 )
 from visualizations import (
-    plot_monthly_expense_breakdown, 
+    plot_monthly_breakdown,
     plot_expenses_by_month,
-    plot_expenses_by_year
+    plot_expenses_by_year,
 )
 
 # --- CONFIGURATION ---
@@ -145,12 +145,14 @@ if not df.empty:
     # 4. Monthly Charts
     st.subheader("📊 Monthly Analysis")
 
-    tab1, tab2 = st.tabs(["Expenses by Category", "Expenses by Month"])
+    tab1, tab2, tab3 = st.tabs(
+        ["Expenses by Category", "Expenses by Month", "Income by Category"]
+    )
 
     with tab1:
         if not df.empty:
             # Group by Category
-            plotly_fig = plot_monthly_expense_breakdown(df)
+            plotly_fig = plot_monthly_breakdown(df, "Expense")
             st.plotly_chart(plotly_fig)
         else:
             st.info("No expenses recorded yet.")
@@ -170,7 +172,15 @@ if not df.empty:
             st.plotly_chart(plotly_fig)
         else:
             st.info("No expenses recorded yet.")
-    
+
+    with tab3:
+        if not df.empty:
+            # Group by Category
+            plotly_fig = plot_monthly_breakdown(df, "Income")
+            st.plotly_chart(plotly_fig)
+        else:
+            st.info("No income recorded yet.")
+
     # 5. Yearly Charts
     st.subheader("📈 Yearly Analysis")
     if not df.empty:
