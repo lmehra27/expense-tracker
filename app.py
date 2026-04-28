@@ -181,17 +181,17 @@ if not df.empty:
         else:
             st.info("No income recorded yet.")
 
-    # 5. Yearly Charts
+    # 5. Recent Transactions Table
+    st.subheader("📝 Recent Transactions")
+    st.dataframe(df.tail(10).iloc[::-1], width="stretch")  # Show last 10, reversed
+
+    # 6. Yearly Charts
     st.subheader("📈 Yearly Analysis")
     if not df.empty:
         yearly_plotly_fig = plot_expenses_by_year(transactions_df=df, years_to_plot=5)
         st.plotly_chart(yearly_plotly_fig)
     else:
         st.info("No expenses recorded yet.")
-
-    # 6. Recent Transactions Table
-    st.subheader("📝 Recent Transactions")
-    st.dataframe(df.tail(10).iloc[::-1], width="stretch")  # Show last 10, reversed
 
 else:
     st.info("No data found. Use the sidebar to add your first expense!")
