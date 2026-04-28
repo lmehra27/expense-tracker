@@ -2,12 +2,12 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-from data_processing import process_expense_data, prepare_yearly_expense_data
+from data_processing import process_data_by_type, prepare_yearly_expense_data
 
 
 def plot_monthly_expense_breakdown(transactions_df: pd.DataFrame) -> px.bar:
     """Plot monthly expense breakdown using Plotly."""
-    month_category = process_expense_data(transactions_df)
+    month_category = process_data_by_type(transactions_df, "Expense")
 
     monthly_sum = (
         month_category.groupby("month")
@@ -49,12 +49,17 @@ def plot_expenses_by_month(
     category: str = None,
 ) -> px.line:
     """Plot expenses by month using Plotly."""
-    expense_data = process_expense_data(transactions_df)
+    expense_data = process_data_by_type(transactions_df, "Expense")
 
     if category == "All":
         expense_data = expense_data.groupby("month")["Amount"].sum().reset_index()
     else:
-        expense_data = expense_data.query("Category == @category").groupby("month")["Amount"].sum().reset_index()
+        expense_data = (
+            expense_data.query("Category == @category")
+            .groupby("month")["Amount"]
+            .sum()
+            .reset_index()
+        )
 
     fig = px.line(
         expense_data,

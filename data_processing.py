@@ -24,15 +24,15 @@ def process_transactions_df(transactions_df: pd.DataFrame) -> pd.DataFrame:
     return transactions_df
 
 
-def process_expense_data(transactions_df: pd.DataFrame) -> pd.DataFrame:
-    """Process expense data for visualization."""
+def process_data_by_type(transactions_df: pd.DataFrame, data_type: str) -> pd.DataFrame:
+    """Process data for a specific type for visualization."""
     if transactions_df.empty:
         return None
 
     transactions_df = process_transactions_df(transactions_df)
-    expense_df = transactions_df[transactions_df["Type"] == "Expense"].copy()
+    data_df = transactions_df[transactions_df["Type"] == data_type].copy()
 
-    current_year_df = expense_df.query("year == @pd.Timestamp.now().year")
+    current_year_df = data_df.query("year == @pd.Timestamp.now().year")
 
     month_category_df = (
         current_year_df.groupby(["month", "Category"])["Amount"]
@@ -45,9 +45,9 @@ def process_expense_data(transactions_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def prepare_yearly_expense_data(
-        transactions_df: pd.DataFrame,
-        years_to_plot: int = 5,
-    ) -> pd.DataFrame:
+    transactions_df: pd.DataFrame,
+    years_to_plot: int = 5,
+) -> pd.DataFrame:
     """Prepare yearly expense data for visualization."""
     if transactions_df.empty:
         return None
@@ -59,10 +59,7 @@ def prepare_yearly_expense_data(
     loockback_year = current_year - years_to_plot + 1
     filtered_expense_df = expense_df.query("year >= @loockback_year")
     yearly_expense = (
-        filtered_expense_df.groupby("year")["Amount"]
-        .sum()
-        .round()
-        .reset_index()
+        filtered_expense_df.groupby("year")["Amount"].sum().round().reset_index()
     )
 
     return yearly_expense
@@ -99,15 +96,10 @@ def calculate_last_month_income(transactions_df: pd.DataFrame) -> float:
 
 def calculate_current_month_expense(transactions_df: pd.DataFrame) -> float:
     """Calculate total expense for the current month."""
-    processed_transactions_df = process_transactions_df(transactions_df)
-    current_year = datetime.now().year
+    processed_expense_df = process_data_by_type(transactions_df, "Expense")
     current_month = datetime.now().strftime("%b")
     current_month_expense = (
-        processed_transactions_df[
-            (processed_transactions_df["Type"] == "Expense")
-            & (processed_transactions_df["year"] == current_year)
-            & (processed_transactions_df["month"] == current_month)
-        ]["Amount"]
+        processed_expense_df[(processed_expense_df["month"] == current_month)]["Amount"]
         .sum()
         .round()
     )
