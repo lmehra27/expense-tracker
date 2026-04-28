@@ -191,7 +191,7 @@ if not df.empty:
 
     # 6. Recent Transactions Table
     st.subheader("📝 Recent Transactions")
-    st.dataframe(df.tail(5).iloc[::-1], width="stretch")  # Show last 5, reversed
+    st.dataframe(df.tail(10).iloc[::-1], width="stretch")  # Show last 10, reversed
 
 else:
     st.info("No data found. Use the sidebar to add your first expense!")
