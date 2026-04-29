@@ -62,7 +62,9 @@ def plot_expenses_by_month(
     category: str = None,
 ) -> px.line:
     """Plot expenses by month using Plotly."""
-    expense_data = process_data_by_type(transactions_df, "Expense")
+    expense_data = process_data_by_type(transactions_df, "Expense").query(
+        "year == @pd.Timestamp.now().year"
+    )
 
     if category == "All":
         expense_data = expense_data.groupby("month")["Amount"].sum().reset_index()
@@ -81,6 +83,7 @@ def plot_expenses_by_month(
         labels={"month": "Month", "Amount": "Expenses ($)"},
         markers=True,
         text="Amount",
+        category_orders={"month": month_lst}
     )
 
     fig.update_layout(font=dict(family="Arial, sans-serif", size=14, color="black"))
