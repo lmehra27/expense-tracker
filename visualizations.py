@@ -3,7 +3,12 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from constants import month_lst
-from data_processing import process_data_by_type, prepare_yearly_expense_data
+from data_processing import (
+    process_data_by_type,
+    prepare_yearly_expense_data,
+    prepare_current_month_category_totals,
+    prepare_income_expense_trend,
+)
 
 
 def plot_monthly_breakdown(transactions_df: pd.DataFrame, data_type: str) -> px.bar:
@@ -116,5 +121,71 @@ def plot_expenses_by_year(
 
     fig.update_layout(font=dict(family="Arial, sans-serif", size=14, color="black"))
     fig.update_xaxes(type="category")
+
+    return fig
+
+
+def plot_top_categories(transactions_df: pd.DataFrame, data_type: str = "Expense"):
+    """Plot categories ranked by total amount for the current month.
+
+    Returns None if there is no data for the current month yet.
+    """
+    category_totals = prepare_current_month_category_totals(
+        transactions_df, data_type
+    )
+
+    if category_totals is None or category_totals.empty:
+        return None
+
+    label = "Expenses" if data_type == "Expense" else "Income"
+
+    fig = px.bar(
+        category_totals,
+        x="Amount",
+        y="Category",
+        orientation="h",
+        text="Amount",
+        labels={"Category": "Category", "Amount": f"{label} This Month ($)"},
+        color="Amount",
+        color_continuous_scale="Blues",
+    )
+
+    fig.update_yaxes(categoryorder="total ascending")
+    fig.update_traces(texttemplate="$%{text:,.0f}", textposition="outside")
+    fig.update_layout(
+        font=dict(family="Arial, sans-serif", size=14, color="black"),
+        coloraxis_showscale=False,
+    )
+
+    return fig
+
+
+def plot_income_vs_expense_trend(transactions_df: pd.DataFrame):
+    """Plot Income vs Expense trend by month for the current year.
+
+    Returns None if there is no data for the current year yet.
+    """
+    trend_data = prepare_income_expense_trend(transactions_df)
+
+    if trend_data is None or trend_data.empty:
+        return None
+
+    fig = px.line(
+        trend_data,
+        x="month",
+        y="Amount",
+        color="Type",
+        labels={"month": "Month", "Amount": "Amount ($)", "Type": "Type"},
+        markers=True,
+        category_orders={"month": month_lst},
+        color_discrete_map={
+            "Income": px.colors.qualitative.Safe[0],
+            "Expense": px.colors.qualitative.Safe[1],
+        },
+    )
+
+    fig.update_layout(font=dict(family="Arial, sans-serif", size=14, color="black"))
+    fig.update_traces(line=dict(width=4), marker=dict(size=10))
+    fig.update_xaxes(range=[-0.5, 11.5])
 
     return fig

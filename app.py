@@ -6,6 +6,7 @@ import pytz
 
 import constants as const
 from data_processing import (
+    process_transactions_df,
     calculate_current_month_expense,
     calculate_last_month_income,
 )
@@ -13,6 +14,8 @@ from visualizations import (
     plot_monthly_breakdown,
     plot_expenses_by_month,
     plot_expenses_by_year,
+    plot_top_categories,
+    plot_income_vs_expense_trend,
 )
 
 # --- CONFIGURATION ---
@@ -128,9 +131,13 @@ df = load_data()
 
 if not df.empty:
 
+    # Process once per render and reuse everywhere below, instead of every
+    # KPI/chart re-deriving numeric/date/year/month columns from scratch.
+    processed_df = process_transactions_df(df.copy())
+
     # 2. KPIs
-    last_month_income = calculate_last_month_income(df)
-    current_month_expense = calculate_current_month_expense(df)
+    last_month_income = calculate_last_month_income(processed_df)
+    current_month_expense = calculate_current_month_expense(processed_df)
     savings = (
         round((last_month_income - current_month_expense), 2)
         if last_month_income > current_month_expense
@@ -145,14 +152,20 @@ if not df.empty:
     # 4. Monthly Charts
     st.subheader("📊 Monthly Analysis")
 
-    tab1, tab2, tab3 = st.tabs(
-        ["Expenses by Category", "Expenses by Month", "Income by Category"]
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(
+        [
+            "Expenses by Category",
+            "Expenses by Month",
+            "Income by Category",
+            "Top Categories",
+            "Income vs Expense Trend",
+        ]
     )
 
     with tab1:
         if not df.empty:
             # Group by Category
-            plotly_fig_expense = plot_monthly_breakdown(df, "Expense")
+            plotly_fig_expense = plot_monthly_breakdown(processed_df, "Expense")
             st.plotly_chart(plotly_fig_expense)
         else:
             st.info("No expenses recorded yet.")
@@ -167,7 +180,7 @@ if not df.empty:
             )
 
             plotly_fig = plot_expenses_by_month(
-                transactions_df=df, category=selected_category
+                transactions_df=processed_df, category=selected_category
             )
             st.plotly_chart(plotly_fig)
         else:
@@ -176,19 +189,37 @@ if not df.empty:
     with tab3:
         if not df.empty:
             # Group by Category
-            plotly_fig_income = plot_monthly_breakdown(df, "Income")
+            plotly_fig_income = plot_monthly_breakdown(processed_df, "Income")
             st.plotly_chart(plotly_fig_income)
         else:
             st.info("No income recorded yet.")
 
+    with tab4:
+        top_expense_categories = plot_top_categories(processed_df, "Expense")
+        if top_expense_categories is not None:
+            st.plotly_chart(top_expense_categories)
+        else:
+            st.info("No expenses recorded yet this month.")
+
+    with tab5:
+        income_vs_expense_fig = plot_income_vs_expense_trend(processed_df)
+        if income_vs_expense_fig is not None:
+            st.plotly_chart(income_vs_expense_fig)
+        else:
+            st.info("No transactions recorded yet this year.")
+
     # 5. Recent Transactions Table
     st.subheader("📝 Recent Transactions")
-    st.dataframe(df.tail(10).iloc[::-1], width="stretch")  # Show last 10, reversed
+    display_df = df.copy()
+    display_df["Date"] = pd.to_datetime(display_df["Date"], errors="coerce")
+    st.dataframe(display_df.tail(10).iloc[::-1], width="stretch")  # Show last 10, reversed
 
     # 6. Yearly Charts
     st.subheader("📈 Yearly Analysis")
     if not df.empty:
-        yearly_plotly_fig = plot_expenses_by_year(transactions_df=df, years_to_plot=5)
+        yearly_plotly_fig = plot_expenses_by_year(
+            transactions_df=processed_df, years_to_plot=5
+        )
         st.plotly_chart(yearly_plotly_fig)
     else:
         st.info("No expenses recorded yet.")

@@ -5,7 +5,11 @@ from constants import month_lst
 
 
 def process_transactions_df(transactions_df: pd.DataFrame) -> pd.DataFrame:
-    """Process transactions data."""
+    """Process raw transactions data into numeric amounts, parsed dates, and year/month columns.
+
+    Call this once per data load; downstream helpers expect an already-processed
+    dataframe rather than re-deriving it themselves.
+    """
     if transactions_df.empty:
         return None
 
@@ -24,13 +28,12 @@ def process_transactions_df(transactions_df: pd.DataFrame) -> pd.DataFrame:
     return transactions_df
 
 
-def process_data_by_type(transactions_df: pd.DataFrame, data_type: str) -> pd.DataFrame:
-    """Process data for a specific type for visualization."""
-    if transactions_df.empty:
+def process_data_by_type(processed_df: pd.DataFrame, data_type: str) -> pd.DataFrame:
+    """Group already-processed transactions by year/month/category for one type."""
+    if processed_df is None or processed_df.empty:
         return None
 
-    transactions_df = process_transactions_df(transactions_df)
-    data_df = transactions_df[transactions_df["Type"] == data_type].copy()
+    data_df = processed_df[processed_df["Type"] == data_type]
 
     month_category_df = (
         data_df.groupby(["year", "month", "Category"])["Amount"]
@@ -43,15 +46,14 @@ def process_data_by_type(transactions_df: pd.DataFrame, data_type: str) -> pd.Da
 
 
 def prepare_yearly_expense_data(
-    transactions_df: pd.DataFrame,
+    processed_df: pd.DataFrame,
     years_to_plot: int = 5,
 ) -> pd.DataFrame:
     """Prepare yearly expense data for visualization."""
-    if transactions_df.empty:
+    if processed_df is None or processed_df.empty:
         return None
 
-    transactions_df = process_transactions_df(transactions_df)
-    expense_df = transactions_df[transactions_df["Type"] == "Expense"].copy()
+    expense_df = processed_df[processed_df["Type"] == "Expense"]
 
     current_year = pd.Timestamp.now().year
     loockback_year = current_year - years_to_plot + 1
@@ -63,9 +65,48 @@ def prepare_yearly_expense_data(
     return yearly_expense
 
 
-def calculate_last_month_income(transactions_df: pd.DataFrame) -> float:
+def prepare_current_month_category_totals(
+    processed_df: pd.DataFrame,
+    data_type: str = "Expense",
+) -> pd.DataFrame:
+    """Rank categories by total amount for the current month."""
+    if processed_df is None or processed_df.empty:
+        return None
+
+    current_year = pd.Timestamp.now().year
+    current_month = pd.Timestamp.now().strftime("%b")
+
+    month_df = processed_df.query(
+        "Type == @data_type and year == @current_year and month == @current_month"
+    )
+
+    return (
+        month_df.groupby("Category")["Amount"]
+        .sum()
+        .round()
+        .reset_index()
+    )
+
+
+def prepare_income_expense_trend(processed_df: pd.DataFrame) -> pd.DataFrame:
+    """Prepare monthly Income vs Expense totals for the current year."""
+    if processed_df is None or processed_df.empty:
+        return None
+
+    current_year = pd.Timestamp.now().year
+    year_df = processed_df.query("year == @current_year")
+
+    return (
+        year_df.groupby(["month", "Type"])["Amount"]
+        .sum()
+        .round()
+        .reset_index()
+    )
+
+
+def calculate_last_month_income(processed_df: pd.DataFrame) -> float:
     """Calculate total income for the last month."""
-    processed_income_df = process_data_by_type(transactions_df, "Income")
+    processed_income_df = process_data_by_type(processed_df, "Income")
 
     current_year = datetime.now().year
     current_month = datetime.now().strftime("%b")
@@ -91,9 +132,9 @@ def calculate_last_month_income(transactions_df: pd.DataFrame) -> float:
     return last_month_income
 
 
-def calculate_current_month_expense(transactions_df: pd.DataFrame) -> float:
+def calculate_current_month_expense(processed_df: pd.DataFrame) -> float:
     """Calculate total expense for the current month."""
-    processed_expense_df = process_data_by_type(transactions_df, "Expense")
+    processed_expense_df = process_data_by_type(processed_df, "Expense")
     current_year = datetime.now().year
     current_month = datetime.now().strftime("%b")
     current_month_expense = (
