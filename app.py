@@ -16,6 +16,8 @@ from visualizations import (
     plot_expenses_by_year,
     plot_top_categories,
     plot_income_vs_expense_trend,
+    plot_yearly_income_vs_expense,
+    plot_yearly_category_breakdown,
 )
 
 # --- CONFIGURATION ---
@@ -216,13 +218,34 @@ if not df.empty:
 
     # 6. Yearly Charts
     st.subheader("📈 Yearly Analysis")
-    if not df.empty:
+
+    year_tab1, year_tab2, year_tab3 = st.tabs(
+        ["Total Expenses", "Income vs Expense", "Expenses by Category"]
+    )
+
+    with year_tab1:
         yearly_plotly_fig = plot_expenses_by_year(
             transactions_df=processed_df, years_to_plot=5
         )
         st.plotly_chart(yearly_plotly_fig)
-    else:
-        st.info("No expenses recorded yet.")
+
+    with year_tab2:
+        yearly_income_vs_expense_fig = plot_yearly_income_vs_expense(
+            processed_df, years_to_plot=5
+        )
+        if yearly_income_vs_expense_fig is not None:
+            st.plotly_chart(yearly_income_vs_expense_fig)
+        else:
+            st.info("No transactions recorded yet.")
+
+    with year_tab3:
+        yearly_category_fig = plot_yearly_category_breakdown(
+            processed_df, data_type="Expense", years_to_plot=5
+        )
+        if yearly_category_fig is not None:
+            st.plotly_chart(yearly_category_fig)
+        else:
+            st.info("No expenses recorded yet.")
 
 else:
     st.info("No data found. Use the sidebar to add your first expense!")

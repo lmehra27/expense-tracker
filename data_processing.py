@@ -65,6 +65,49 @@ def prepare_yearly_expense_data(
     return yearly_expense
 
 
+def prepare_yearly_income_expense(
+    processed_df: pd.DataFrame,
+    years_to_plot: int = 5,
+) -> pd.DataFrame:
+    """Prepare yearly Income vs Expense totals."""
+    if processed_df is None or processed_df.empty:
+        return None
+
+    current_year = pd.Timestamp.now().year
+    loockback_year = current_year - years_to_plot + 1
+    filtered_df = processed_df.query("year >= @loockback_year")
+
+    return (
+        filtered_df.groupby(["year", "Type"])["Amount"]
+        .sum()
+        .round()
+        .reset_index()
+    )
+
+
+def prepare_yearly_category_breakdown(
+    processed_df: pd.DataFrame,
+    data_type: str = "Expense",
+    years_to_plot: int = 5,
+) -> pd.DataFrame:
+    """Prepare yearly totals by category for a given transaction type."""
+    if processed_df is None or processed_df.empty:
+        return None
+
+    current_year = pd.Timestamp.now().year
+    loockback_year = current_year - years_to_plot + 1
+    type_df = processed_df[processed_df["Type"] == data_type].query(
+        "year >= @loockback_year"
+    )
+
+    return (
+        type_df.groupby(["year", "Category"])["Amount"]
+        .sum()
+        .round()
+        .reset_index()
+    )
+
+
 def prepare_current_month_category_totals(
     processed_df: pd.DataFrame,
     data_type: str = "Expense",

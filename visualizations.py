@@ -6,6 +6,8 @@ from constants import month_lst
 from data_processing import (
     process_data_by_type,
     prepare_yearly_expense_data,
+    prepare_yearly_income_expense,
+    prepare_yearly_category_breakdown,
     prepare_current_month_category_totals,
     prepare_income_expense_trend,
 )
@@ -117,6 +119,88 @@ def plot_expenses_by_year(
         labels={"year": "Year", "Amount": "Total Expenses ($)"},
         text="Amount",
         color_discrete_sequence=px.colors.qualitative.Safe,
+    )
+
+    fig.update_layout(font=dict(family="Arial, sans-serif", size=14, color="black"))
+    fig.update_xaxes(type="category")
+
+    return fig
+
+
+def plot_yearly_income_vs_expense(
+    transactions_df: pd.DataFrame,
+    years_to_plot: int = 5,
+):
+    """Plot yearly Income vs Expense totals as grouped bars.
+
+    Returns None if there is no data in the lookback window.
+    """
+    yearly_data = prepare_yearly_income_expense(
+        transactions_df, years_to_plot=years_to_plot
+    )
+
+    if yearly_data is None or yearly_data.empty:
+        return None
+
+    fig = px.bar(
+        yearly_data,
+        x="year",
+        y="Amount",
+        color="Type",
+        barmode="group",
+        text="Amount",
+        labels={"year": "Year", "Amount": "Amount ($)", "Type": "Type"},
+        color_discrete_map={
+            "Income": px.colors.qualitative.Safe[0],
+            "Expense": px.colors.qualitative.Safe[1],
+        },
+    )
+
+    fig.update_traces(texttemplate="$%{text:,.0f}", textposition="outside")
+    fig.update_layout(font=dict(family="Arial, sans-serif", size=14, color="black"))
+    fig.update_xaxes(type="category")
+
+    return fig
+
+
+def plot_yearly_category_breakdown(
+    transactions_df: pd.DataFrame,
+    data_type: str = "Expense",
+    years_to_plot: int = 5,
+):
+    """Plot yearly totals by category as a stacked bar.
+
+    Returns None if there is no data in the lookback window.
+    """
+    yearly_category = prepare_yearly_category_breakdown(
+        transactions_df, data_type=data_type, years_to_plot=years_to_plot
+    )
+
+    if yearly_category is None or yearly_category.empty:
+        return None
+
+    yearly_sum = yearly_category.groupby("year")["Amount"].sum().round().reset_index()
+
+    label = "Expenses" if data_type == "Expense" else "Income"
+
+    fig = px.bar(
+        yearly_category,
+        x="year",
+        y="Amount",
+        color="Category",
+        labels={"year": "Year", "Amount": f"Total {label} ($)"},
+        color_discrete_sequence=px.colors.qualitative.Safe,
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=yearly_sum["year"],
+            y=yearly_sum["Amount"],
+            mode="text",
+            text=yearly_sum["Amount"],
+            textposition="top center",
+            showlegend=False,
+        )
     )
 
     fig.update_layout(font=dict(family="Arial, sans-serif", size=14, color="black"))
